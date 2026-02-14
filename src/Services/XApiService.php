@@ -172,7 +172,7 @@ class XApiService
                 'tweet.fields' => 'public_metrics,created_at',
             ];
 
-            $response = Twitter::forApiV2()->findById($tweetId, $params);
+            $response = Twitter::forApiV2()->getTweet($tweetId, $params);
 
             if (! isset($response['data'])) {
                 throw new Exception('Failed to get tweet metrics from X API response');
@@ -205,7 +205,11 @@ class XApiService
     public function getMentionsAsDto(array $options = []): XMentionsResponse
     {
         try {
-            $userId = config('x-suite.twitter.user_id') ?? Twitter::forApiV2()->user()->getMe()['data']['id'];
+            $userId = config('x-suite.twitter.user_id');
+
+            if (! $userId) {
+                throw new Exception('x-suite.twitter.user_id config is required for mentions. Set TWITTER_USER_ID in your .env file.');
+            }
 
             $params = array_merge([
                 'max_results' => $options['max_results'] ?? 10,
@@ -214,7 +218,7 @@ class XApiService
                 'user.fields' => 'username,name',
             ], $options);
 
-            $response = Twitter::forApiV2()->user()->getMentions($userId, $params);
+            $response = Twitter::forApiV2()->userMentions($userId, $params);
 
             return XMentionsResponse::fromApiResponse($response);
         } catch (Exception $e) {
@@ -246,7 +250,7 @@ class XApiService
                 'user.fields' => 'id,username,name,public_metrics,created_at',
             ];
 
-            $response = Twitter::forApiV2()->user()->findByUsername($username, $params);
+            $response = Twitter::forApiV2()->getUserByUsername($username, $params);
 
             if (! isset($response['data'])) {
                 throw new Exception('Failed to get user from X API response');
