@@ -220,7 +220,9 @@ class XApiService
 
             $response = Twitter::forApiV2()->userMentions($userId, $params);
 
-            return XMentionsResponse::fromApiResponse($response);
+            $responseArray = self::normalizeApiResponseToArray($response, 'user mentions');
+
+            return XMentionsResponse::fromApiResponse($responseArray);
         } catch (Exception $e) {
             Log::error('X API: Failed to get mentions', [
                 'error' => $e->getMessage(),
@@ -228,6 +230,30 @@ class XApiService
 
             throw $e;
         }
+    }
+
+    /**
+     * Ensure the X API response is an array (decode JSON string if needed).
+     * Prevents TypeError when the atymic/twitter client returns raw body string.
+     *
+     * @param  array<string, mixed>|string  $response
+     * @return array<string, mixed>
+     *
+     * @throws Exception
+     */
+    protected static function normalizeApiResponseToArray(array|string $response, string $context = 'X API'): array
+    {
+        if (is_array($response)) {
+            return $response;
+        }
+
+        $decoded = json_decode($response, true);
+        if (is_array($decoded)) {
+            return $decoded;
+        }
+
+        $preview = is_string($response) ? substr($response, 0, 200) : get_debug_type($response);
+        throw new Exception(sprintf('%s response was not a valid array or JSON string. Got: %s', $context, $preview));
     }
 
     /**
