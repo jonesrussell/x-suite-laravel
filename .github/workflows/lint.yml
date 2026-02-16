@@ -32,8 +32,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: vendor
-          key: vendor-${{ hashFiles('composer.lock') }}
-          restore-keys: vendor-
+          key: vendor-8.2-${{ hashFiles('composer.lock') }}
+          restore-keys: vendor-8.2-
 
       - name: Install dependencies
         if: steps.cache-vendor.outputs.cache-hit != 'true'
