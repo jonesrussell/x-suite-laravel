@@ -32,6 +32,9 @@ jobs:
           tools: composer:v2
           coverage: none
 
+      - name: Require composer.lock
+        run: test -f composer.lock || (echo "::error::composer.lock must be committed for reproducible CI." && exit 1)
+
       - name: Cache vendor
         id: cache-vendor
         uses: actions/cache@v4
@@ -41,7 +44,6 @@ jobs:
           restore-keys: vendor-${{ matrix.php-version }}-
 
       - name: Install dependencies
-        if: steps.cache-vendor.outputs.cache-hit != 'true'
         run: composer install --no-interaction --no-progress
 
       - name: Run tests
