@@ -1,4 +1,4 @@
-name: Tests
+name: tests
 
 on:
   push:
@@ -8,43 +8,39 @@ on:
     branches:
       - main
 
-permissions:
-  contents: read
-
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@2.35.5
+        with:
+          php-version: '8.4'
+
+      - name: Install Dependencies
+        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+      - name: Run Pint
+        run: vendor/bin/pint --test
+
   test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        php-version: ['8.2', '8.4']
-      fail-fast: false
-
+    needs: lint
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@2.35.5
         with:
-          php-version: ${{ matrix.php-version }}
+          php-version: '8.4'
           tools: composer:v2
-          coverage: none
+          coverage: xdebug
 
-      - name: Require composer.lock
-        run: test -f composer.lock || (echo "::error::composer.lock must be committed for reproducible CI." && exit 1)
-
-      - name: Cache vendor
-        id: cache-vendor
-        uses: actions/cache@v4
-        with:
-          path: vendor
-          key: vendor-${{ matrix.php-version }}-${{ hashFiles('composer.lock') }}
-          restore-keys: vendor-${{ matrix.php-version }}-
-
-      - name: Install dependencies
-        run: composer install --no-interaction --no-progress
+      - name: Install Dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
       - name: Run tests
-        run: vendor/bin/pest
+        run: vendor/bin/pest --compact
