@@ -54,6 +54,7 @@
     },
     "scripts": {
         "lint": "pint --parallel",
+        "lint:check": "pint --test",
         "test": "pest"
     },
     "config": {

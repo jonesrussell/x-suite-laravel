@@ -40,4 +40,4 @@ jobs:
         run: composer install --no-interaction --no-progress
 
       - name: Run Pint
-        run: composer run lint -- --test
+        run: vendor/bin/pint --test
