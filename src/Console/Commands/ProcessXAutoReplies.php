@@ -3,6 +3,7 @@
 namespace JonesRussell\XSuite\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use JonesRussell\XSuite\Services\XAutoReplyService;
 
 class ProcessXAutoReplies extends Command
@@ -17,10 +18,22 @@ class ProcessXAutoReplies extends Command
 
         $this->info("Processing up to {$limit} mentions...");
 
-        $repliesSent = $autoReplyService->processMentions($limit);
+        try {
+            $repliesSent = $autoReplyService->processMentions($limit);
 
-        $this->info("Sent {$repliesSent} auto-replies.");
+            $this->info("Sent {$repliesSent} auto-replies.");
 
-        return Command::SUCCESS;
+            return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            Log::error('x-suite:process-auto-replies failed', [
+                'message' => $e->getMessage(),
+                'exception' => get_class($e),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            $this->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 }

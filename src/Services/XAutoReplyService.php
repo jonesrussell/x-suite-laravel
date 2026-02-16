@@ -16,7 +16,19 @@ class XAutoReplyService
     public function processMentions(int $limit = 10): int
     {
         try {
-            $mentionsResponse = $this->xApiService->getMentionsAsDto(['max_results' => $limit]);
+            $mentionsResponse = retry(
+                3,
+                fn () => $this->xApiService->getMentionsAsDto(['max_results' => $limit]),
+                [1000, 2000, 3000],
+                function (\Throwable $e): bool {
+                    $msg = strtolower($e->getMessage() ?? '');
+
+                    return str_contains($msg, '429')
+                        || str_contains($msg, 'rate limit')
+                        || str_contains($msg, 'timeout')
+                        || str_contains($msg, 'connection');
+                }
+            );
 
             if ($mentionsResponse->isEmpty()) {
                 return 0;
@@ -58,7 +70,7 @@ class XAutoReplyService
                 'error' => $e->getMessage(),
             ]);
 
-            throw $e;
+            return 0;
         }
     }
 
