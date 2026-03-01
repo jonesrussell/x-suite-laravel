@@ -150,7 +150,9 @@ class XApiService
                 'user.fields' => 'username,name',
             ], $options);
 
-            return Twitter::forApiV2()->searchRecent($query, $params);
+            $response = Twitter::forApiV2()->searchRecent($query, $params);
+
+            return self::normalizeApiResponseToArray($response, 'search tweets');
         } catch (Exception $e) {
             Log::error('X API: Failed to search tweets', [
                 'error' => $e->getMessage(),
@@ -172,7 +174,8 @@ class XApiService
                 'tweet.fields' => 'public_metrics,created_at',
             ];
 
-            $response = Twitter::forApiV2()->getTweet($tweetId, $params);
+            $raw = Twitter::forApiV2()->getTweet($tweetId, $params);
+            $response = self::normalizeApiResponseToArray($raw, 'tweet metrics');
 
             if (! isset($response['data'])) {
                 throw new Exception('Failed to get tweet metrics from X API response');
@@ -276,7 +279,8 @@ class XApiService
                 'user.fields' => 'id,username,name,public_metrics,created_at',
             ];
 
-            $response = Twitter::forApiV2()->getUserByUsername($username, $params);
+            $raw = Twitter::forApiV2()->getUserByUsername($username, $params);
+            $response = self::normalizeApiResponseToArray($raw, 'user by username');
 
             if (! isset($response['data'])) {
                 throw new Exception('Failed to get user from X API response');
